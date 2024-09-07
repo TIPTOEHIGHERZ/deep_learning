@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import Union, Iterable, List
+from .PositionalEncode import PositionalEncode
 
 
 def patch_image(image: torch.Tensor, patch_size):
@@ -10,34 +11,40 @@ def patch_image(image: torch.Tensor, patch_size):
     return result
 
 
-def patch_flatten(x, embedd_dim):
+def patch_flatten(x, token_len, device='cuda'):
     x = x.transpose(-2, -3).transpose(-1, -2)
     x = x.reshape(*x.shape[:2], -1)
-    x = torch.concatenate([x, torch.zeros(x.shape[0], embedd_dim - x.shape[1], *x.shape[2:])], dim=1)
+    # pad length to fixed length
+    if token_len > x.shape[1]:
+        x = torch.concatenate([x, torch.zeros(x.shape[0], token_len - x.shape[1], *x.shape[2:],
+                                              device=device)], dim=1)
     return x
 
 
 class PatchEmbedding(nn.Module):
     def __init__(self,
-                 im_size: List[int, int],
-                 batch_size: int,
-                 patch_size: Union[int, Iterable[int, int]],
+                 channels: int,
+                 im_size: list,
+                 patch_size: Union[int, list],
                  embedd_dim: int,
+                 token_len: Union[int, None],
                  device='cuda'
                  ):
         super().__init__()
 
         self.im_size = im_size
-        self.batch_size = batch_size
         self.patch_size = [patch_size, patch_size] if isinstance(patch_size, int) else patch_size
         self.embedd_dim = embedd_dim
         self.device = device
+        self.channels = channels
 
-        self.patched_size = [self.im_size[0] // self.patch_size[0],
-                             self.im_size[1] // self.patch_size[1]]
-        self.patch_num = self.patched_size[0] * self.patched_size[1]
+        self.grid_size = [self.im_size[0] // self.patch_size[0],
+                          self.im_size[1] // self.patch_size[1]]
+        self.token_len = token_len if token_len is not None else self.grid_size[0] * self.grid_size[1]
+        self.patch_num = self.grid_size[0] * self.grid_size[1]
 
-        self.proj_mat = nn.Linear(self.patched_size[0] * self.patched_size[1], embedd_dim, bias=False)
+        self.proj = nn.Linear(self.patch_size[0] * self.patch_size[1] * self.channels, embedd_dim, bias=False)
+        self.pos_encode = PositionalEncode([self.token_len, embedd_dim])
 
         self.to(device)
         return
@@ -45,4 +52,10 @@ class PatchEmbedding(nn.Module):
     def forward(self, x):
         # patching image into size [batch_size, patch_num, channels, height, width]
         x = patch_image(x, self.patch_size)
+        x = patch_flatten(x, self.token_len, device=self.device)
+        x = self.proj(x)
+        x = self.pos_encode(x)
+
+        return x
+
 
