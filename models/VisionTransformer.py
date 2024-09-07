@@ -53,7 +53,9 @@ class VisionTransformer(nn.Module):
         # patching image into size [batch_size, patch_num, channels, height, width]
         x = self.patch_embedding(x)
         x = self.encoder_blocks(x)
+        # get the head
+        x = x[:, 0]
         x = self.mlp_head(x)
 
-        return nn.functional.softmax(x, dim=-1)
+        return x
 

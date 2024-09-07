@@ -44,16 +44,21 @@ class PatchEmbedding(nn.Module):
         self.patch_num = self.grid_size[0] * self.grid_size[1]
 
         self.proj = nn.Linear(self.patch_size[0] * self.patch_size[1] * self.channels, embedd_dim, bias=False)
-        self.pos_encode = PositionalEncode([self.token_len, embedd_dim])
+        # because of the cls head, need to increase 1
+        self.pos_encode = PositionalEncode([self.token_len + 1, embedd_dim])
+        self.cls_token = nn.Parameter(torch.rand([1, 1, self.embedd_dim], device=self.device))
 
         self.to(device)
         return
 
     def forward(self, x):
+        batch_size = x.shape[0]
         # patching image into size [batch_size, patch_num, channels, height, width]
         x = patch_image(x, self.patch_size)
         x = patch_flatten(x, self.token_len, device=self.device)
         x = self.proj(x)
+        cls_token = self.cls_token.repeat(batch_size, *([1] * (len(x.shape) - 1)))
+        x = torch.concatenate([cls_token, x], dim=1)
         x = self.pos_encode(x)
 
         return x

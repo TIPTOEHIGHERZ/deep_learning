@@ -7,6 +7,7 @@ class MultiHeadAttention(nn.Module):
     def __init__(self,
                  embedd_dim: int,
                  head_num: int,
+                 drop_out: float = 0.1,
                  device='cuda'):
         super().__init__()
         # 必须能被整除
@@ -16,6 +17,7 @@ class MultiHeadAttention(nn.Module):
         self.Wv = nn.Linear(embedd_dim, embedd_dim, bias=False)
         self.Wo = nn.Linear(embedd_dim, embedd_dim, bias=False)
         self.d_kq = embedd_dim // head_num
+        self.drop_out = nn.Dropout(drop_out)
 
         self.to(device)
         return
@@ -40,7 +42,7 @@ class MultiHeadAttention(nn.Module):
 
         heads = self.attention(q, k, v)
         merged_heads = self.merge_mat(heads)
-        result = self.Wo(merged_heads)
+        result = self.drop_out(self.Wo(merged_heads))
 
         return result
 

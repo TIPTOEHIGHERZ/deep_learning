@@ -5,6 +5,7 @@ import torch.nn as nn
 class PositionalEncode(nn.Module):
     def __init__(self,
                  feature_shape,
+                 drop_out: float = 0.1,
                  device='cuda'):
         super().__init__()
         self.encoding = torch.zeros(feature_shape, device=device, requires_grad=False)
@@ -12,10 +13,11 @@ class PositionalEncode(nn.Module):
         i = torch.arange(0, feature_shape[1], 2, device=device).unsqueeze(dim=0)
         self.encoding[:, 0::2] = torch.sin(pos / torch.pow(10000, i / feature_shape[1]))
         self.encoding[:, 1::2] = torch.cos(pos / torch.pow(10000, i / feature_shape[1]))
+        self.drop_out = nn.Dropout(drop_out)
 
         self.to(device)
         return
 
     def forward(self, x):
-        return x + self.encoding
+        return self.drop_out(x + self.encoding)
 

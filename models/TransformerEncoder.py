@@ -20,9 +20,12 @@ class TransformerEncoder(nn.Module):
         return
 
     def forward(self, x):
+        x_ = x
         x = self.layer_norm_0(x)
-        x = self.multi_head_attention([x, x, x])
+        x = self.multi_head_attention([x, x, x]) + x_
+
+        x_ = x
         x = self.layer_norm_1(x)
-        x = self.mlp(x)
+        x = self.mlp(x) + x_
 
         return x
