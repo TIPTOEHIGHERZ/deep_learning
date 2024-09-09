@@ -16,6 +16,31 @@ def calc_acc(prob_pred: torch.Tensor, label: torch.Tensor) -> float:
     return acc.item()
 
 
+def evaluate(model: nn.Module,
+             datasets: Iterable,
+             loss_fn: Callable,
+             device='cuda'):
+    model.eval()
+
+    acc_sum = 0.0
+    loss_sum = 0.0
+    total_datasets = 0
+    with torch.no_grad():
+        for image, label in datasets:
+            image = image.to(device)
+            label = label.to(device)
+
+            pred = model(image)
+            loss = loss_fn(pred, label)
+            acc = calc_acc(torch.softmax(pred, dim=-1), label)
+
+            loss_sum += loss.item()
+            acc_sum += acc
+            total_datasets += image.shape[0]
+
+    return loss_sum / total_datasets, acc_sum / total_datasets
+
+
 def train(model: nn.Module,
           datasets: Iterable,
           epochs: int,
@@ -44,6 +69,11 @@ def train(model: nn.Module,
 
             iteration.set_postfix({'loss': loss.item(), 'acc': calc_acc(torch.softmax(pred, dim=-1), label)})
             iteration.set_description(f'Epochs: {epoch} / {epochs}')
+
+        # evaluate model performance
+        loss, acc = evaluate(model, datasets, loss_fn, device)
+        iteration.set_postfix({'loss': loss, 'acc': acc})
+        iteration.set_description(f'Epochs: {epoch + 1} / {epochs}')
 
     return
 
