@@ -1,0 +1,18 @@
+name: zzy
+description: zzy_running
+workspace: zzy
+project: test
+resources:
+  resource_pool: rtx2080ti
+  slots_per_trial: 1
+max_restarts: 0
+searcher:
+  name: single
+  metric: loss
+  max_length: 1000
+environment:
+  image: registry.iaticetc.cn:5000/cbx/cat:0.1
+  registry_auth:
+    username: zzy
+    password: Zhangzeyu123456
+entrypoint: python main.py

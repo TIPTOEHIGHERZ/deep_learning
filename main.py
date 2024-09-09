@@ -5,6 +5,7 @@ import torchvision
 import torchvision.transforms as transforms
 import tqdm
 from models import VisionTransformer
+import os
 
 
 def calc_acc(prob_pred: torch.Tensor, label: torch.Tensor) -> float:
@@ -55,7 +56,7 @@ transform_train = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-batch_size = 64
+batch_size = 128
 datasets = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True)
 # image, label = next(iter(datasets))
 # print(label)
@@ -71,4 +72,8 @@ vit = VisionTransformer(10,
                         3796,
                         12)
 optimizer = torch.optim.Adam(vit.parameters(), lr=1e-5, betas=(0.9, 0.999))
-train(vit, datasets, 1, optimizer, nn.CrossEntropyLoss(), device='cuda')
+print(os.getcwd())
+idx = 2
+vit.load_state_dict(torch.load(f'./checkpoints/model_{idx}.pt'))
+train(vit, datasets, 100, optimizer, nn.CrossEntropyLoss(), device='cuda')
+torch.save(vit.state_dict(), f'./checkpoints/model_{idx + 1}.pt')
