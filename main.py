@@ -33,9 +33,11 @@ vit = VisionTransformer(10,
                         12)
 optimizer = torch.optim.Adam(vit.parameters(), lr=1e-5, betas=(0.9, 0.999))
 idx = 23
-vit.load_state_dict(torch.load(f'checkpoints/model_{idx}.pt'))
-for i in range(5):
-    idx += 1
-    train(vit, datasets, 10, optimizer, nn.CrossEntropyLoss())
-    # 10个epoch保存一次
-    torch.save(vit.state_dict(), f'checkpoints/model_{idx}.pt')
+epochs = 100
+save_period = 10
+print(f'load model_{idx}.pt')
+vit.load_state_dict(torch.load(f'checkpoints/model_{idx}.pt', weights_only=False))
+train(vit, datasets, 10, optimizer, nn.CrossEntropyLoss(),
+      save_period=save_period,
+      save_idx=idx + 1,
+      save_dir='./checkpoints')

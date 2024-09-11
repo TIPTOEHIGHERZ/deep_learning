@@ -5,6 +5,7 @@ import argparse
 
 pswd = 'ustc.112233'
 ip = 'user@192.168.51.24:'
+base_dir = '/mnt/share/debug/zzy/'
 
 parser = argparse.ArgumentParser('upload')
 # parser.add_argument('-f', '--file', help='files to upload to server', type=str)
@@ -15,11 +16,12 @@ args = parser.parse_args()
 
 file_name = args.file
 
-dst = args.dst if args.dst else '/mnt/share/debug/zzy'
+dst = base_dir + args.dst if args.dst else '/mnt/share/debug/zzy/'
+if dst[-1] != '/':
+    dst += '/'
 dst = ip + dst
 
 if args.recursive:
-    os.system(f'sshpass -p \'{pswd}\' scp -r {file_name} {dst}')
+    os.system(f'sshpass -p \'{pswd}\'  rsync -av --progress {file_name} {dst}')
 else:
-    print(1)
-    os.system(f'sshpass -p \'{pswd}\' scp {file_name} {dst}')
+    os.system(f'sshpass -p \'{pswd}\' rsync -v --progress {file_name} {dst}')

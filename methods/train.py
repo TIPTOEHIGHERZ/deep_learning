@@ -11,8 +11,13 @@ def train(model: nn.Module,
           optimizer: torch.optim.Optimizer,
           loss_fn: Callable,
           lr_scheduler=None,
+          save_period: int=None,
+          save_idx: int=None,
+          save_dir: str='./checkpoints/',
           device='cuda'):
     model.train()
+    if save_dir[-1] != '/':
+        save_dir += '/'
 
     acc_sum = 0.0
     loss_sum = 0.0
@@ -43,9 +48,12 @@ def train(model: nn.Module,
             iteration.set_postfix({'loss': loss_sum / total_data, 'acc': acc_sum / total_data})
             iteration.set_description(f'Epochs: {epoch} / {epochs}')
 
-        # evaluate model performance
-        # loss, acc = evaluate(model, datasets, loss_fn, verbose=False, device=device)
-        # iteration.set_postfix({'loss': loss, 'acc': acc})
-        # iteration.set_description(f'Epochs: {epoch + 1} / {epochs}')
+        if save_period and (epoch + 1) % save_period == 0:
+            torch.save(model.state_dict(), save_dir + f'model_{save_idx}.pt')
+            save_idx += 1
+
+    if save_period and (epoch + 1) % save_period != 0:
+        # 不可整除，当前模型尚未被保存，保存模型后再退出
+        torch.save(model.state_dict(), save_dir + f'model_{save_idx}.pt')
 
     return
