@@ -15,7 +15,7 @@ transform_train = transforms.Compose([
 ])
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=False, transform=transform_train)
 batch_size = 128
-datasets = torch.utils.data.DataLoader(trainset, batch_size, shuffle=True)
+datasets = torch.utils.data.DataLoader(trainset, batch_size, shuffle=False)
 
 vit = VisionTransformer(10,
                         3,
@@ -27,7 +27,7 @@ vit = VisionTransformer(10,
                         12,
                         3796,
                         12)
-index = 15
+index = 56
 vit.load_state_dict(torch.load(f'checkpoints/model_{index}.pt'))
 loss, acc = evaluate(vit, datasets, nn.CrossEntropyLoss(), verbose=True)
 print(loss, acc)

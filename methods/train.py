@@ -18,13 +18,13 @@ def train(model: nn.Module,
     model.train()
     if save_dir[-1] != '/':
         save_dir += '/'
-
-    acc_sum = 0.0
-    loss_sum = 0.0
-    total_data = 0
     
     for epoch in range(epochs):
         iteration = tqdm.tqdm(datasets)
+        
+        acc_sum = 0.0
+        loss_sum = 0.0
+        total_data = 0
 
         for image, label in iteration:
             image = image.to(device)
